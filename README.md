@@ -8,5 +8,5 @@ Admin dashboard to add and manage clients.
 
 Secure file uploads and storage.
 
-Client login via shortcode `[cfm_client_login]` to access their files.
+Client login via shortcode `[prm_patient_login]` to access their files.
 
