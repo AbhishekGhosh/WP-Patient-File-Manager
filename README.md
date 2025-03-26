@@ -1,6 +1,7 @@
-WP Patient File Manager
+Patient Record Manager
 
-This plugin allows WordPress admins to add clients with details, upload JPEG & PDF files, and create a client login where they can access their files.
+This plugin allows WordPress admins (and editors) to add clients with details, upload JPEG & PDF files, and create a client login where they can access their files.
+Only admins can delete records. 
 
 Features:
 
