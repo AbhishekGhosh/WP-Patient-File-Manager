@@ -40,6 +40,7 @@ function prm_admin_menu() {
     $capability = 'edit_pages'; // Editors and Administrators can access
     add_menu_page('Patient Manager', 'Patient Manager', $capability, 'prm-patient-manager', 'prm_patient_manager_page');
     add_submenu_page('prm-patient-manager', 'View Patients', 'View & Edit Patients', $capability, 'prm-view-patients', 'prm_view_patients_page');
+    add_submenu_page('prm-patient-manager', 'Update Patient Password', 'Update Password', $capability, 'prm-update-password', 'prm_update_patient_password_page');
 }
 add_action('admin_menu', 'prm_admin_menu');
 function prm_generate_random_filename($extension) {
@@ -392,6 +393,111 @@ function prm_patient_login_form() {
     <?php
     return ob_get_clean();
 }
+function prm_update_patient_password_page() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'prm_patients';
+    $message = '';
+
+    // Check if password update form is submitted
+    if (isset($_POST['update_password'])) {
+        $patient_id = sanitize_text_field($_POST['patient_id']);
+        $new_password = $_POST['new_password'];
+
+        if (!empty($new_password)) {
+            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+            $updated = $wpdb->update(
+                $table_name,
+                ['password' => $hashed_password],
+                ['patient_id' => $patient_id]
+            );
+
+            if ($updated) {
+                $message = '<div class="prm-success">✅ Password updated successfully!</div>';
+            } else {
+                $message = '<div class="prm-error">❌ Failed to update password. Try again!</div>';
+            }
+        }
+    }
+
+    // Search for patient
+    $searched_patient = null;
+    if (isset($_POST['search_patient'])) {
+        $search_id = sanitize_text_field($_POST['search_id']);
+        $searched_patient = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE patient_id = %s", $search_id));
+    }
+
+    ?>
+    <div class="prm-container">
+        <h2>Update Patient Password</h2>
+        <?php echo $message; ?>
+        
+        <!-- Search Form -->
+        <form method="post">
+            <input type="text" name="search_id" placeholder="Enter Patient ID" required>
+            <button type="submit" name="search_patient">🔍 Search</button>
+        </form>
+
+        <?php if ($searched_patient): ?>
+            <h3>Patient Found: <?php echo esc_html($searched_patient->name); ?></h3>
+            <form method="post">
+                <input type="hidden" name="patient_id" value="<?php echo esc_attr($searched_patient->patient_id); ?>">
+                <input type="password" name="new_password" placeholder="Enter New Password" required>
+                <button type="submit" name="update_password">🔑 Update Password</button>
+            </form>
+        <?php elseif (isset($_POST['search_patient'])): ?>
+            <div class="prm-error">❌ Patient not found!</div>
+        <?php endif; ?>
+    </div>
+
+    <style>
+        .prm-container {
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .prm-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .prm-container button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            background: #0073aa;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .prm-container button:hover {
+            background: #005a87;
+        }
+        .prm-success {
+            background: #dff0d8;
+            color: #3c763d;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .prm-error {
+            background: #f2dede;
+            color: #a94442;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+    </style>
+    <?php
+}
+
 add_shortcode('prm_patient_login', 'prm_patient_login_form');
 function prm_handle_login() {
     global $wpdb;
