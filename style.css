@@ -1,0 +1,26 @@
+<style>
+.prm-login-container, .prm-patient-record {
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 40px;
+    background: #eee;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+.prm-login-container input, .prm-login-container button {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+.prm-login-container button {
+    background: #474e5a;
+    color: #fff;
+    cursor: pointer;
+}
+.prm-error {
+    color: red;
+    font-weight: bold;
+}
+</style>
