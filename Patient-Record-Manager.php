@@ -46,6 +46,39 @@ add_action('admin_menu', 'prm_admin_menu');
 function prm_generate_random_filename($extension) {
     return date('Ymd') . '-' . bin2hex(random_bytes(15)) . '.' . $extension;
 }
+function prm_add_cdn_settings_page() {
+    add_submenu_page(
+        'prm-patient-manager',
+        'CDN Settings',
+        'CDN Settings',
+        'manage_options',
+        'prm-cdn-settings',
+        'prm_cdn_settings_page'
+    );
+}
+add_action('admin_menu', 'prm_add_cdn_settings_page');
+
+function prm_cdn_settings_page() {
+    if (isset($_POST['prm_save_cdn_settings'])) {
+        $cdn_url = esc_url_raw($_POST['prm_cdn_url']);
+        update_option('prm_cdn_url', $cdn_url);
+        echo '<div class="updated"><p>✅ CDN URL updated successfully!</p></div>';
+    }
+
+    $cdn_url = get_option('prm_cdn_url', '');
+    ?>
+    <div class="wrap">
+        <h2>CDN Settings</h2>
+        <form method="post">
+            <label for="prm_cdn_url">Enter your CDN base URL (e.g., https://cdn.example.com/uploads/):</label>
+            <input type="text" name="prm_cdn_url" id="prm_cdn_url" value="<?php echo esc_attr($cdn_url); ?>" style="width: 100%; max-width: 500px;" required>
+            <p><small>Make sure your CDN is properly configured as an origin pull CDN.</small></p>
+            <button type="submit" name="prm_save_cdn_settings" class="button-primary">Save Settings</button>
+        </form>
+    </div>
+    <?php
+}
+
 // Function to Display Add Patient Page
 function prm_patient_manager_page() {
     global $wpdb;
@@ -529,12 +562,21 @@ function prm_display_patient_records($patient) {
         
         <h3>Uploaded Files</h3>
         <?php 
+	function prm_get_file_url($file_name) {
+    $cdn_url = get_option('prm_cdn_url', '');
+    if (!empty($cdn_url)) {
+        return trailingslashit($cdn_url) . $file_name;
+    }
+    return wp_upload_dir()['baseurl'] . '/prm_uploads/' . $file_name;
+}
+
         $files = explode(',', $patient->files);
-        foreach ($files as $file) {
-            if (!empty($file)) {
-                echo '<a href="' . esc_url(wp_upload_dir()['baseurl'] . '/prm_uploads/' . $file) . '" target="_blank">📄 View File</a><br>';
-            }
-        }
+foreach ($files as $file) {
+    if (!empty($file)) {
+        echo '<a href="' . esc_url(prm_get_file_url($file)) . '" target="_blank">📄 View File</a><br>';
+    }
+}
+
         ?>
     </div>
     <?php
