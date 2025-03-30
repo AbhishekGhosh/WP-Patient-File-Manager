@@ -63,28 +63,29 @@ function prm_patient_manager_page() {
         $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
         
         // File Upload Handling
-        $upload_dir = wp_upload_dir();
-        $target_dir = $upload_dir['basedir'] . "/prm_uploads/";
+$upload_dir = wp_upload_dir();
+$patient_folder = sanitize_file_name($patient_id); // Secure folder name
+$target_dir = $upload_dir['basedir'] . "/prm_uploads/$patient_folder/";
 
-        if (!file_exists($target_dir)) {
-            mkdir($target_dir, 0755, true); // Create folder if not exists
+if (!file_exists($target_dir)) {
+    mkdir($target_dir, 0755, true);
+}
+
+$uploaded_files = [];
+if (!empty($_FILES['files']['name'][0])) {
+    foreach ($_FILES['files']['name'] as $key => $filename) {
+        $file_tmp = $_FILES['files']['tmp_name'][$key];
+        $file_ext = pathinfo($filename, PATHINFO_EXTENSION);
+
+        if (in_array(strtolower($file_ext), ['jpg', 'jpeg', 'pdf'])) {
+            $new_filename = prm_generate_random_filename($file_ext);
+            move_uploaded_file($file_tmp, $target_dir . $new_filename);
+            $uploaded_files[] = "$patient_folder/$new_filename"; // Store path relative to /prm_uploads/
         }
+    }
+}
 
-        $uploaded_files = [];
-        if (!empty($_FILES['files']['name'][0])) {
-            foreach ($_FILES['files']['name'] as $key => $filename) {
-                $file_tmp = $_FILES['files']['tmp_name'][$key];
-                $file_ext = pathinfo($filename, PATHINFO_EXTENSION);
-
-                if (in_array(strtolower($file_ext), ['jpg', 'jpeg', 'pdf'])) {
-                    $new_filename = prm_generate_random_filename($file_ext);
-                    move_uploaded_file($file_tmp, $target_dir . $new_filename);
-                    $uploaded_files[] = $new_filename;
-                }
-            }
-        }
-
-        $files = implode(',', $uploaded_files); // Store file names in DB
+$files = implode(',', $uploaded_files); // Store relative paths in DB
 
         // Insert into Database
         $inserted = $wpdb->insert(
@@ -242,30 +243,30 @@ function prm_view_patients_page() {
 
     echo '<div class="wrap"><h2>View & Edit Patients</h2>';
 
-    // Handle File Uploads
-    if (isset($_POST['update_files'])) {
-        $patient_id = sanitize_text_field($_POST['patient_id']);
-        $existing_files = sanitize_text_field($_POST['existing_files']);
+    // File Upload Handling
+$upload_dir = wp_upload_dir();
+$patient_folder = sanitize_file_name($patient_id); // Secure folder name
+$target_dir = $upload_dir['basedir'] . "/prm_uploads/$patient_folder/";
 
-        $upload_dir = wp_upload_dir();
-        $target_dir = $upload_dir['basedir'] . "/prm_uploads/";
-        if (!file_exists($target_dir)) {
-            mkdir($target_dir, 0755, true);
+if (!file_exists($target_dir)) {
+    mkdir($target_dir, 0755, true);
+}
+
+$uploaded_files = [];
+if (!empty($_FILES['files']['name'][0])) {
+    foreach ($_FILES['files']['name'] as $key => $filename) {
+        $file_tmp = $_FILES['files']['tmp_name'][$key];
+        $file_ext = pathinfo($filename, PATHINFO_EXTENSION);
+
+        if (in_array(strtolower($file_ext), ['jpg', 'jpeg', 'pdf'])) {
+            $new_filename = prm_generate_random_filename($file_ext);
+            move_uploaded_file($file_tmp, $target_dir . $new_filename);
+            $uploaded_files[] = "$patient_folder/$new_filename"; // Store path relative to /prm_uploads/
         }
+    }
+}
 
-        $new_files = [];
-        if (!empty($_FILES['additional_files']['name'][0])) {
-            foreach ($_FILES['additional_files']['name'] as $key => $filename) {
-                $file_tmp = $_FILES['additional_files']['tmp_name'][$key];
-                $file_ext = pathinfo($filename, PATHINFO_EXTENSION);
-
-                if (in_array(strtolower($file_ext), ['jpg', 'jpeg', 'pdf'])) {
-                    $new_filename = date('Ymd') . '-' . bin2hex(random_bytes(15)) . '.' . $file_ext;
-                    move_uploaded_file($file_tmp, $target_dir . $new_filename);
-                    $new_files[] = $new_filename;
-                }
-            }
-        }
+$files = implode(',', $uploaded_files); // Store relative paths in DB
 
         // Combine existing and new files
         $updated_files = trim($existing_files . ',' . implode(',', $new_files), ',');
