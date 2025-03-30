@@ -515,6 +515,13 @@ function prm_handle_login() {
         return '<div class="prm-error">Invalid Patient ID or Password</div>' . prm_patient_login_form();
     }
 }
+session_start();
+if ($patient && password_verify($password, $patient->password)) {
+    $_SESSION['prm_logged_in'] = true;
+    $_SESSION['prm_patient_id'] = $patient->patient_id;
+    return prm_display_patient_records($patient);
+}
+
 function prm_display_patient_records($patient) {
     ob_start();
     ?>
@@ -533,7 +540,7 @@ function prm_display_patient_records($patient) {
         $files = explode(',', $patient->files);
         foreach ($files as $file) {
             if (!empty($file)) {
-                echo '<a href="' . esc_url(wp_upload_dir()['baseurl'] . '/prm_uploads/' . $file) . '" target="_blank">📄 View File</a><br>';
+                echo '<a href="' . site_url('/wp-content/plugins/Patient-Record-Manager/prm_file_access.php?file=' . urlencode($file)) . '" target="_blank">📄 View File</a><br>';
             }
         }
         ?>
